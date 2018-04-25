@@ -254,6 +254,9 @@
     module.exports require 相对目录（廖雪峰：小程序一点补充（node教程的一部分））
     https://www.liaoxuefeng.com/wiki/001434446689867b27157e896e74d51a89c25cc8b43bdb3000/001434502419592fd80bbb0613a42118ccab9435af408fd000
 
+    怎样有效地学习 Node.js？ - 知乎用户的回答 - 知乎 
+    https://www.zhihu.com/question/19793473/answer/15952853
+
   # 杂项
 
     hexo Github部署个人博客之填坑
