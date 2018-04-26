@@ -181,11 +181,13 @@
       1、通过Flash插件发送HTTP请求，这种方式可以绕过浏览器的安全限制，但必须安装Flash，并且跟Flash交互。不过Flash用起来麻烦，而且现在用得也越来越少了。
         参考资料：flash跨域访问问题：https://blog.csdn.net/vince6799/article/details/4586312 （此种方式基本已被淘汰，资料都比较老，仅作了解，可自行搜集）
                 Flash跨域的完全解决方案：https://blog.csdn.net/lcg_ryan/article/details/42007443
+
       2、通过在同源域名下架设一个代理服务器来转发，JavaScript负责把请求发送到代理服务器：
          ___________________________________________________________________________
         | '/proxy?url=http://www.sina.com.cn'
         |___________________________________________________________________________
         代理服务器再把结果返回，这样就遵守了浏览器的同源策略。这种方式麻烦之处在于需要服务器端额外做开发。
+
       3、第三种方式称为JSONP，它有个限制，只能用GET请求，并且要求返回JavaScript。这种方式跨域实际上是利用了浏览器允许跨域引用JavaScript资源：
          _______________________________________________________________________________________
         | <html>
@@ -235,8 +237,77 @@
           | }
           |_________________________________________________________________________________________________
           就完成了跨域加载数据。
-      4、CORS(大头待补充)
+
+      4、CORS
+
+        参考资料：跨域资源共享 CORS 详解：http://www.ruanyifeng.com/blog/2016/04/cors（非常详细的CORS资料，可以着重参考）
+                HTTP请求行、请求头、请求体、响应行、响应头、响应体详解：https://blog.csdn.net/u010256388/article/details/68491509
+
+        CORS全称Cross-Origin Resource Sharing，是HTML5规范定义的如何跨域访问资源。（需要浏览器支持HTML5）
+        了解CORS前，我们先搞明白概念：
+        Origin表示本域，也就是浏览器当前页面的域。
+
+          简单请求：
+          当JavaScript向外域（如sina.com）发起请求后，浏览器收到响应后，首先检查 Access-Control-Allow-Origin 是否包含本域，如果是，则此次跨域请求成功，如果不是，则请求失败，JavaScript将无法获取到响应的任何数据。
+          用一个图来表示就是：
+              ./img/kuayuCORS.jpg
+          假设本域是my.com，外域是sina.com，只要响应头Access-Control-Allow-Origin为 http://my.com，或者是*，本次请求就可以成功。
+          可见，跨域能否成功，取决于对方服务器是否愿意给你设置一个正确的Access-Control-Allow-Origin，决定权始终在对方手中。
+          上面这种跨域请求，称之为“简单请求”。
+          简单请求包括GET、HEAD和POST（POST的Content-Type类型仅限application/x-www-form-urlencoded、multipart/form-data和text/plain），并且不能出现任何自定义头（例如，X-Custom: 12345），通常能满足90%的需求。
+
+          简单请求需要同时满足以下两大条件：{
+            (1) 请求方法是以下三种方法之一：
+              HEAD
+              GET
+              POST
+            (2)HTTP的头信息不超出以下几种字段：
+              Accept
+              Accept-Language
+              Content-Language
+              Last-Event-ID
+              Content-Type：只限于三个值application/x-www-form-urlencoded、multipart/form-data、text/plain
+          }
+          凡是不同时满足上面两个条件，就属于非简单请求。
+
+        无论你是否需要用JavaScript通过CORS跨域请求资源，你都要了解CORS的原理。最新的浏览器全面支持HTML5。在引用外域资源时，除了JavaScript和CSS外，都要验证CORS。例如，当你引用了某个第三方CDN上的字体文件时：
+         _________________________________________________________________________________________________
+        | /* CSS */
+        | @font-face {
+        |   font-family: 'FontAwesome';
+        |   src: url('http://cdn.com/fonts/fontawesome.ttf') format('truetype');
+        | }
+        |_________________________________________________________________________________________________
+        如果该CDN服务商未正确设置Access-Control-Allow-Origin，那么浏览器无法加载字体资源。
+
+          非简单请求：
+          对于PUT、DELETE以及其他类型如application/json的POST请求，在发送AJAX请求之前，浏览器会先发送一个OPTIONS请求（称为preflighted请求）到这个URL上，询问目标服务器是否接受：
+           _________________________________________________________________________________________________
+          | OPTIONS /path/to/resource HTTP/1.1
+          | Host: bar.com
+          | Origin: http://my.com
+          | Access-Control-Request-Method: POST
+          |_________________________________________________________________________________________________
+          服务器必须响应并明确指出允许的Method：
+           _________________________________________________________________________________________________
+          | HTTP/1.1 200 OK
+          | Access-Control-Allow-Origin: http://my.com
+          | Access-Control-Allow-Methods: POST, GET, PUT, OPTIONS
+          | Access-Control-Max-Age: 86400
+          |_________________________________________________________________________________________________
+            上述字段的一些解释：
+              （1）Access-Control-Allow-Methods
+              该字段必需，它的值是逗号分隔的一个字符串，表明服务器支持的所有跨域请求的方法。注意，返回的是所有支持的方法，而不单是浏览器请求的那个方法。这是为了避免多次"预检"请求。
+              （2）Access-Control-Allow-Headers
+              如果浏览器请求包括Access-Control-Request-Headers字段，则Access-Control-Allow-Headers字段是必需的。它也是一个逗号分隔的字符串，表明服务器支持的所有头信息字段，不限于浏览器在"预检"中请求的字段。
+              （3）Access-Control-Allow-Credentials
+              该字段与简单请求时的含义相同。
+              （4）Access-Control-Max-Age
+              该字段可选，用来指定本次预检请求的有效期，单位为秒。上面结果中，有效期是20天（1728000秒），即允许缓存该条回应1728000秒（即20天），在此期间，不用发出另一条预检请求。
+          
+          浏览器确认服务器响应的Access-Control-Allow-Methods头确实包含将要发送的AJAX请求的Method，才会继续发送AJAX，否则，抛出一个错误。
+          由于以POST、PUT方式传送JSON格式的数据在REST中很常见，所以要跨域正确处理POST和PUT请求，服务器端必须正确响应OPTIONS请求。
+
+          一旦服务器通过了"预检"请求，以后每次浏览器正常的CORS请求，就都跟简单请求一样，会有一个Origin头信息字段。服务器的回应，也都会有一个Access-Control-Allow-Origin头信息字段。
+
       
-
-
-
