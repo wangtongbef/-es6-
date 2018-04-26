@@ -7,3 +7,6 @@
     XMLHttpRequest对象
 
   跨域实现
+
+# promise async await (es6异步操作)
+
