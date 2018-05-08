@@ -167,6 +167,9 @@
 
     js原生操作HTML对象的属性区别
     http://www.zhangyunling.com/28.html
+	
+	自执行匿名函数：!function () { /* code */ } ();
+	http://www.cnblogs.com/beijingstruggle/p/5970824.html
 
   # 基础知识相关
 
