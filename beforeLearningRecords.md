@@ -245,6 +245,12 @@
 
     逐步解决动态添加样式导致的元素闪烁
     https://segmentfault.com/a/1190000006216880
+	
+	rem布局加载闪烁问题
+	https://blog.csdn.net/u013778905/article/details/77938784
+	
+	几种移动端适配：font-size设置的思考（@media 弹性 rem）以拉钩、网易、淘宝为例
+	https://blog.csdn.net/wangqiuchen_study/article/details/75007366
 
   # node相关
 
